@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ t('site_title') }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <a class="brand" href="{{ url_for('index') }}">{{ t('site_title') }}</a>
+  <nav>
+    <a href="{{ url_for('index') }}">{{ t('ranking') }}</a>
+    {% if current_user_id %}
+      <a href="{{ url_for('profile') }}">{{ t('my_profile') }}</a>
+      <a href="{{ url_for('logout') }}">{{ t('logout') }}</a>
+    {% else %}
+      <a href="{{ url_for('login') }}">{{ t('login') }}</a>
+      <a href="{{ url_for('register') }}">{{ t('register') }}</a>
+    {% endif %}
+    <span class="langs">
+      {% for code in langs %}<a href="{{ url_for('set_lang', code=code) }}" class="{{ 'active' if code == lang }}">{{ code|upper }}</a>{% endfor %}
+    </span>
+  </nav>
+</header>
+<main>
+  {% for msg in get_flashed_messages() %}<p class="flash">{{ msg }}</p>{% endfor %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

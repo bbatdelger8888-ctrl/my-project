@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ eng.full_name }}</h1>
+<p>{{ eng.specialty }} · {{ t('years') }}: {{ eng.years|round(1) }} · {{ t(eng.academic) }} · {{ t(eng.professional) }}</p>
+{% include "_breakdown.html" %}
+<h2>{{ t('projects') }}</h2>
+<ul>{% for p in projects %}<li>{{ p.name }}{% if p.deposit %} ({{ p.deposit }}){% endif %} — {{ t(p.size) }}, {{ t(p.complexity) }}</li>{% endfor %}</ul>
+<h2>{{ t('software') }}</h2>
+<ul>{% for k in skills %}<li>{{ k.name }} — {{ t(k.level) }}</li>{% endfor %}</ul>
+<p class="note">{{ t('self_reported') }}</p>
+{% endblock %}
