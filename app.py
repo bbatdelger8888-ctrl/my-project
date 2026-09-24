@@ -5,6 +5,7 @@ import sqlite3
 from flask import (
     Flask, abort, flash, g, redirect, render_template, request, session, url_for,
 )
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import scoring
@@ -49,6 +50,10 @@ def create_app(config=None):
         app.config.update(config)
     if not app.config.get("TESTING") and not app.debug and app.config["SECRET_KEY"] == "dev-change-me":
         app.logger.warning("SECRET_KEY тохируулаагүй байна — production-д заавал тохируулна уу.")
+    if os.environ.get("BEHIND_PROXY"):
+        # nginx-ийн ард: HTTPS-ийг зөв таниж, cookie-г зөвхөн HTTPS-ээр илгээнэ.
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+        app.config.update(SESSION_COOKIE_SECURE=True, SESSION_COOKIE_HTTPONLY=True)
     os.makedirs(app.instance_path, exist_ok=True)
 
     def get_db():

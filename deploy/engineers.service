@@ -1,0 +1,14 @@
+# /etc/systemd/system/engineers.service
+[Unit]
+Description=Mongolian Mining Engineers (gunicorn)
+After=network.target
+
+[Service]
+User=www-data
+WorkingDirectory=/opt/engineers
+EnvironmentFile=/opt/engineers/.env
+ExecStart=/opt/engineers/venv/bin/gunicorn -w 3 -b 127.0.0.1:8000 "app:create_app()"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
