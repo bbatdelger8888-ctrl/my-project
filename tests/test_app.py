@@ -5,7 +5,8 @@ from app import create_app
 
 @pytest.fixture
 def client(tmp_path):
-    app = create_app({"TESTING": True, "DATABASE": str(tmp_path / "test.db"), "SECRET_KEY": "test"})
+    app = create_app({"TESTING": True, "DATABASE": str(tmp_path / "test.db"), "SECRET_KEY": "test",
+                      "CSRF_ENABLED": False})
     return app.test_client()
 
 
@@ -65,3 +66,14 @@ def test_profile_requires_login(client):
 def test_english(client):
     client.get("/lang/en")
     assert "Mongolian Mining Engineers" in client.get("/").get_data(as_text=True)
+
+
+def test_csrf_blocks_post_without_token(tmp_path):
+    app = create_app({"TESTING": True, "DATABASE": str(tmp_path / "c.db"), "SECRET_KEY": "test"})
+    c = app.test_client()
+    assert c.post("/register", data={"email": "a@x.mn", "password": "secret1", "full_name": "Бат"}).status_code == 400
+    c.get("/register")
+    with c.session_transaction() as sess:
+        token = sess["csrf"]
+    resp = c.post("/register", data={"email": "a@x.mn", "password": "secret1", "full_name": "Бат", "csrf": token})
+    assert resp.status_code == 302

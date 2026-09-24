@@ -1,4 +1,5 @@
 import os
+import secrets
 import sqlite3
 
 from flask import (
@@ -46,6 +47,8 @@ def create_app(config=None):
     )
     if config:
         app.config.update(config)
+    if not app.config.get("TESTING") and not app.debug and app.config["SECRET_KEY"] == "dev-change-me":
+        app.logger.warning("SECRET_KEY тохируулаагүй байна — production-д заавал тохируулна уу.")
     os.makedirs(app.instance_path, exist_ok=True)
 
     def get_db():
@@ -67,9 +70,22 @@ def create_app(config=None):
     def lang():
         return session.get("lang", DEFAULT_LANG)
 
+    def csrf_token():
+        if "csrf" not in session:
+            session["csrf"] = secrets.token_hex(16)
+        return session["csrf"]
+
+    @app.before_request
+    def check_csrf():
+        if request.method == "POST" and app.config.get("CSRF_ENABLED", True):
+            sent = request.form.get("csrf", "")
+            if not sent or not secrets.compare_digest(sent, session.get("csrf", "")):
+                abort(400)
+
     @app.context_processor
     def inject():
         return {
+            "csrf_token": csrf_token,
             "t": lambda key: translate(lang(), key),
             "lang": lang(),
             "langs": LANGS,
