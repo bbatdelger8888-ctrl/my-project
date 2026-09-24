@@ -2,7 +2,7 @@
 
 TEXTS = {
     "mn": {
-        "site_title": "Уул уурхайн инженерүүд",
+        "site_title": "Mongolian Engineers Ranking",
         "ranking": "Жагсаалт",
         "register": "Бүртгүүлэх",
         "login": "Нэвтрэх",
@@ -49,7 +49,7 @@ TEXTS = {
         "w_projects": "Төсөл (40)", "w_software": "Программ (40)",
     },
     "en": {
-        "site_title": "Mongolian Mining Engineers",
+        "site_title": "Mongolian Engineers Ranking",
         "ranking": "Ranking",
         "register": "Register",
         "login": "Log in",

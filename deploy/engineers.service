@@ -1,6 +1,6 @@
 # /etc/systemd/system/engineers.service
 [Unit]
-Description=Mongolian Mining Engineers (gunicorn)
+Description=Mongolian Engineers Ranking (gunicorn)
 After=network.target
 
 [Service]

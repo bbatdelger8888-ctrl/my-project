@@ -65,7 +65,7 @@ def test_profile_requires_login(client):
 
 def test_english(client):
     client.get("/lang/en")
-    assert "Mongolian Mining Engineers" in client.get("/").get_data(as_text=True)
+    assert "Mongolian Engineers Ranking" in client.get("/").get_data(as_text=True)
 
 
 def test_csrf_blocks_post_without_token(tmp_path):
