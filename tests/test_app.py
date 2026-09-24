@@ -77,3 +77,12 @@ def test_csrf_blocks_post_without_token(tmp_path):
         token = sess["csrf"]
     resp = c.post("/register", data={"email": "a@x.mn", "password": "secret1", "full_name": "Бат", "csrf": token})
     assert resp.status_code == 302
+
+
+def test_disclaimers(client):
+    assert "хариуцахгүй" in client.get("/").get_data(as_text=True)
+    register(client, "a@x.mn", "Бат")
+    assert "хариуцахгүй" in client.get("/profile").get_data(as_text=True)
+    assert "хариуцахгүй" in client.get("/engineer/1").get_data(as_text=True)
+    client.get("/lang/en")
+    assert "not responsible" in client.get("/engineer/1").get_data(as_text=True)

@@ -21,3 +21,4 @@ table { width:100%; border-collapse:collapse; }
 th, td { text-align:left; padding:8px; border-bottom:1px solid var(--line); }
 .note { color:var(--muted); font-size:13px; }
 @media (max-width: 560px) { .wide { display:none; } }
+.disclaimer { background:#f3e9dc; border-left:4px solid var(--accent); padding:8px 12px; font-size:14px; }

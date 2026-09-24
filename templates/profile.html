@@ -2,6 +2,7 @@
 {% block content %}
 <h1>{{ t('my_profile') }}</h1>
 {% include "_breakdown.html" %}
+<p class="disclaimer">{{ t('profile_disclaimer') }}</p>
 <form method="post" class="stack"><input type="hidden" name="csrf" value="{{ csrf_token() }}">
   <label>{{ t('full_name') }} <input name="full_name" value="{{ eng.full_name }}" required></label>
   <label>{{ t('specialty') }} <input name="specialty" value="{{ eng.specialty }}"></label>
