@@ -26,3 +26,11 @@
   * Oracle Always Free: кредит карт шаардлагатай, 2026-08-д хязгаар өөрчлөгдсөн мэдээ бий — зөрүүтэй, шалгах.
   * Монголд үнэгүй сервер олдоогүй.
 - PythonAnywhere байршуулалт: deploy/PYTHONANYWHERE.md + нэг командтай setup скрипт, WSGI (SECRET_KEY автомат үүснэ). Локал симуляцаар шалгасан; бодит PythonAnywhere дээр туршаагүй.
+
+2026-09-24 (3)
+- САЙТ АЖИЛЛАЖ БАЙНА: https://batdelger123.pythonanywhere.com (PythonAnywhere free, Python 3.13).
+- Setup скрипт pip дээр гацсан → засав (Flask бэлэн бол алгасна, 2 мин хязгаар).
+- Анхны бүртгэл: Б.Батдэлгэр, 100 оноо.
+- АНХААР: сайт 2026-10-24-нд унтарна — сар бүр Web таб → "Run until 1 month from today".
+- Шинэчлэл гаргах: Bash консолд `bash my-project/deploy/pythonanywhere_setup.sh`, дараа нь Web → Reload.
+Шийдэгдээгүй: жижиг/дунд төслийн тодорхойлолт, мэдээлэл баталгаажуулах, хувийн мэдээллийн хууль.
