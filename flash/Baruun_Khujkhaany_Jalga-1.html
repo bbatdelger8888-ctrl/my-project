@@ -469,7 +469,7 @@ tr.hs td{background:rgba(141,184,214,.12)}
   <div id="yr3d" style="position:absolute;inset:0"></div>
   <div class="fbar" style="top:0"></div><div class="fbar" style="bottom:0"></div>
   <div class="fhud ftitle"><p class="eyebrow" style="font-size:24px">Уурхайн хөгжил · 1–7-р жил</p></div>
-  <p class="fhud fnote">Жил бүрийн эцсийн байдлын DXF · Овоолгын өндрийг схемээр харуулав</p>
+  <p class="fhud fnote">Жил бүрийн эцсийн байдлын DXF · Овоолгын өндрийг схемээр харуулав · Чирж эргүүлэх, дугуйгаар ойртох</p>
   <div class="fhud" style="right:128px;top:110px;text-align:right"><p class="num g" id="yrNum" style="font-size:200px;line-height:.9">1</p><p class="num" style="font-size:48px">-р жил</p></div>
   <div class="fhud" id="yrStats" style="left:128px;bottom:150px;display:grid;grid-template-columns:repeat(4,auto);gap:6px 44px;background:rgba(14,13,11,.6);border:1px solid var(--line);border-radius:12px;padding:20px 28px;backdrop-filter:blur(6px)"></div>
   <div class="fhud" style="right:128px;bottom:150px;display:flex;gap:8px" id="yrDots"></div>
@@ -1172,20 +1172,22 @@ const caps=[[0,6,'Хэнтий аймаг, Цэнхэрмандал сум · Т
 const orb={tgt:new THREE.Vector3(),r:1800,th:.9,ph:1.0},drag={on:false,b:0,x:0,y:0};
 function toOrbit(){mode='orbit';const d=cam.position.clone().sub(look.getPoint(1));orb.tgt.copy(look.getPoint(1));orb.r=d.length();orb.th=Math.atan2(d.x,d.z);orb.ph=Math.acos(Math.min(.99,d.y/orb.r));again.hidden=false}
 function stageScale(){const r=slide.getBoundingClientRect();return r.width/1920||1}
-box.addEventListener('pointerdown',e=>{drag.on=true;drag.b=e.button;drag.x=e.clientX;drag.y=e.clientY;if(mode==='fly')toOrbit();box.setPointerCapture(e.pointerId)});
-box.addEventListener('pointermove',e=>{if(!drag.on)return;const s=stageScale(),dx=(e.clientX-drag.x)/s,dy=(e.clientY-drag.y)/s;drag.x=e.clientX;drag.y=e.clientY;
+function bind(el){
+el.addEventListener('pointerdown',e=>{drag.on=true;drag.b=e.button;drag.x=e.clientX;drag.y=e.clientY;if(mode==='fly')toOrbit();el.setPointerCapture(e.pointerId)});
+el.addEventListener('pointermove',e=>{if(!drag.on)return;const s=stageScale(),dx=(e.clientX-drag.x)/s,dy=(e.clientY-drag.y)/s;drag.x=e.clientX;drag.y=e.clientY;
   if(drag.b===2||e.shiftKey){const r=new THREE.Vector3(Math.cos(orb.th),0,-Math.sin(orb.th)),f=new THREE.Vector3(Math.sin(orb.th),0,Math.cos(orb.th));orb.tgt.addScaledVector(r,-dx*orb.r*.0012).addScaledVector(f,-dy*orb.r*.0012)}
   else{orb.th-=dx*.005;orb.ph=Math.max(.15,Math.min(1.45,orb.ph-dy*.004))}});
-box.addEventListener('pointerup',()=>drag.on=false);box.addEventListener('contextmenu',e=>e.preventDefault());
-box.addEventListener('wheel',e=>{e.preventDefault();if(mode==='fly')toOrbit();orb.r=Math.max(120,Math.min(6000,orb.r*Math.exp(e.deltaY*.0012)))},{passive:false});
-box.addEventListener('click',e=>e.stopPropagation());
+el.addEventListener('pointerup',()=>drag.on=false);el.addEventListener('contextmenu',e=>e.preventDefault());
+el.addEventListener('wheel',e=>{e.preventDefault();if(mode==='fly')toOrbit();orb.r=Math.max(120,Math.min(6000,orb.r*Math.exp(e.deltaY*.0012)))},{passive:false});
+el.addEventListener('click',e=>e.stopPropagation())}
+bind(box);bind(document.getElementById('yr3d'));
 again.addEventListener('click',e=>{e.stopPropagation();start()});
 
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 function frame(now){if(!running)return;requestAnimationFrame(frame);
   const t=Math.max(0,(now-t0)/1000);
   if(mode==='years'){const Y=Math.min(7.6,t/3.4+.4),yi=Math.max(1,Math.min(7,Math.ceil(Y)));mat.uniforms.uYear.value=Y;if(t>30)t0=now;
-    orb.th=.5+t*.012;const s2=Math.sin(.72);cam.position.set(orb.tgt.x+2000*s2*Math.sin(orb.th),orb.tgt.y+2000*Math.cos(.72),orb.tgt.z+2000*s2*Math.cos(orb.th));mat.uniforms.uShow.value=.35;cam.lookAt(orb.tgt);
+    if(!drag.on)orb.th+=.0005;const s2=Math.sin(orb.ph);cam.position.set(orb.tgt.x+orb.r*s2*Math.sin(orb.th),orb.tgt.y+orb.r*Math.cos(orb.ph),orb.tgt.z+orb.r*s2*Math.cos(orb.th));mat.uniforms.uShow.value=.35;cam.lookAt(orb.tgt);
     if(yi!==lastY){lastY=yi;window.YRHUD&&YRHUD(yi)}}
   else if(mode==='fly'){const k=reduce?1:Math.min(1,t/DUR),e=ease(k);cam.position.copy(path.getPoint(e));cam.lookAt(look.getPoint(e));
     const c=caps.find(c=>t>=c[0]&&t<c[1]);cap.innerHTML=c?c[2]:'';cap.classList.toggle('show',!!c);if(k>=1)toOrbit()}
@@ -1203,7 +1205,7 @@ function frame(now){if(!running)return;requestAnimationFrame(frame);
   const hdg=(Math.atan2(dir.x,-dir.z)*180/Math.PI+360)%360,f=n=>Math.round(n).toLocaleString('en-US');
   tele.innerHTML=`<span>ӨНДӨР</span><b>${f(alt)} м</b><span>ГАЗРААС</span><b>${f(Math.max(0,agl))} м</b><span>ЧИГЛЭЛ</span><b>${String(Math.round(hdg)).padStart(3,'0')}°</b><span>X</span><b>${f(my+G.y0)}</b><span>Y</span><b>${f(mx+G.x0)}</b>`}
 function start(kind){if(!ready)build();plan();const host=kind==='years'?document.getElementById('yr3d'):box;if(renderer.domElement.parentNode!==host)host.appendChild(renderer.domElement);
-  if(kind==='years'){mode='years';lastY=0;mat.uniforms.uYear.value=0;const c=G.crest.reduce((a,p)=>[a[0]+p[0]/G.crest.length,a[1]+p[1]/G.crest.length],[0,0]);orb.tgt.copy(W3(c[0],c[1]-250,hAt(c[0],c[1])));t0=performance.now();if(!running){running=true;requestAnimationFrame(frame)}return}
+  if(kind==='years'){mode='years';lastY=0;mat.uniforms.uYear.value=0;const c=G.crest.reduce((a,p)=>[a[0]+p[0]/G.crest.length,a[1]+p[1]/G.crest.length],[0,0]);orb.tgt.copy(W3(c[0],c[1]-250,hAt(c[0],c[1])));orb.r=2000;orb.ph=.72;orb.th=.5;t0=performance.now();if(!running){running=true;requestAnimationFrame(frame)}return}
   mat.uniforms.uYear.value=9;mat.uniforms.uShow.value=1;mode='fly';again.hidden=true;t0=performance.now();if(!running){running=true;requestAnimationFrame(frame)}}
 function stop(){running=false}
 window.FLY={enter(k){start(k)},leave(){stop()},at(s){t0=performance.now()-s*1000;if(mode!=="years")mode="fly"},peek(i){const d=digs[i||0].house.parent;mode="orbit";orb.tgt.copy(d.position);orb.r=140;orb.ph=1.05;orb.th=2.2}};
@@ -1286,7 +1288,7 @@ addEventListener('keydown',e=>{
   else if(e.key==='g'||e.key==='G'||e.key==='Escape'&&ov)toggleOv();
   else if(e.key==='f'||e.key==='F')fs()});
 stage.addEventListener('click',e=>{if(ov){const s=e.target.closest('.slide');if(s){ov=true;toggleOv(slides.indexOf(s))}return}
-  if(e.target.closest('button')||e.target.closest('#fly3d'))return;const r=stage.getBoundingClientRect();(e.clientX-r.left)/r.width<.3?go(cur-1):go(cur+1)});
+  if(e.target.closest('button')||e.target.closest('#fly3d')||e.target.closest('#yr3d'))return;const r=stage.getBoundingClientRect();(e.clientX-r.left)/r.width<.3?go(cur-1):go(cur+1)});
 let tx=null;stage.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
 stage.addEventListener('touchend',e=>{if(tx==null)return;const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>40)go(cur+(dx<0?1:-1));tx=null});
 
