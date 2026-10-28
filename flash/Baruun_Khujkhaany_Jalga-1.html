@@ -1212,7 +1212,7 @@ window.FLY={enter(k){start(k)},leave(){stop()},at(s){t0=performance.now()-s*1000
 })();
 </script><script>window.YRHUD=(y)=>{const ob=[228582,272045,272045,272045,272045,272045,272045],sd=[270000,270000,270000,270000,270000,270000,282911],ca=[83.0,87.1,106.5,118.1,114.2,121.1,127.1],wo=[7.4,8.0,8.5,11.4,9.5,13.6,14.3],f=n=>n.toLocaleString('en-US');
  document.getElementById('yrNum').textContent=y;const i=y-1;
- document.getElementById('yrStats').innerHTML=`<p class="lbl">Хөрс, м³</p><p class="lbl">Элс, м³</p><p class="lbl g">Касситерит, тн</p><p class="lbl s">Вольфрамит, тн</p><p class="num" style="font-size:52px">${f(ob[i])}</p><p class="num" style="font-size:52px">${f(sd[i])}</p><p class="num g" style="font-size:52px">${ca[i].toFixed(1)}</p><p class="num s" style="font-size:52px">${wo[i].toFixed(1)}</p>`+(y===4?'<p class="mono mu" style="grid-column:1/-1;font-size:18px">4-р жилийн хүрээний файл ирээгүй тул шинэ талбай харагдахгүй</p>':'');
+ document.getElementById('yrStats').innerHTML=`<p class="lbl">Хөрс, м³</p><p class="lbl">Элс, м³</p><p class="lbl g">Касситерит, тн</p><p class="lbl s">Вольфрамит, тн</p><p class="num" style="font-size:52px">${f(ob[i])}</p><p class="num" style="font-size:52px">${f(sd[i])}</p><p class="num g" style="font-size:52px">${ca[i].toFixed(1)}</p><p class="num s" style="font-size:52px">${wo[i].toFixed(1)}</p>`;
  document.getElementById('yrDots').innerHTML=[1,2,3,4,5,6,7].map(k=>`<span style="width:44px;height:8px;border-radius:4px;background:${k<=y?'var(--gold)':'var(--line)'}"></span>`).join('')};</script>
 <script>
 (()=>{
