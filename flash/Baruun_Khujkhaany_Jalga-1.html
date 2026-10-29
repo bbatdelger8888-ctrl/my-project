@@ -1034,6 +1034,8 @@ tr.hs td{background:rgba(141,184,214,.12)}
 const G=window.GEO,slide=document.getElementById('flySlide');if(!G||!slide||!window.THREE)return;
 const EX=2.2,H0=1400,{nx,ny,R}=G,W=(nx-1)*R,Hm=(ny-1)*R;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* phones and tablets: sparser mesh, smaller buffers */
+const lite=matchMedia('(pointer: coarse)').matches||Math.min(screen.width,screen.height)<900,ST=lite?2:1;let broken=false;
 let ready=false,running=false,t0=0,mode='fly',renderer,scene,cam,mesh,trucks=[],labels=[],zf,pm,digs=[],YR,DY,SY,DF,mat,routes=[];
 const box=document.getElementById('fly3d'),lab=document.getElementById('flyLabels'),tele=document.getElementById('flyTele'),cap=document.getElementById('flyCap'),again=document.getElementById('flyAgain');
 
@@ -1048,10 +1050,10 @@ function hAt(mx,my){let i=mx/R,j=my/R;i=Math.max(0,Math.min(nx-1.001,i));j=Math.
 const W3=(mx,my,h)=>new THREE.Vector3(mx-W/2,(h-H0)*EX,-(my-Hm/2));
 
 /* overlay texture: the mine plan, drawn from the DXF vectors */
-function overlay(){const cw=2048,ch=Math.round(cw*Hm/W),c=document.createElement('canvas');c.width=cw;c.height=ch;const x=c.getContext('2d');
+function overlay(){const cw=lite?1024:2048,ch=Math.round(cw*Hm/W),c=document.createElement('canvas');c.width=cw;c.height=ch;const x=c.getContext('2d');
   const P=p=>[p[0]/W*cw,(1-p[1]/Hm)*ch],k=cw/W;
   const path=(pts,close)=>{x.beginPath();pts.forEach((p,i)=>{const q=P(p);i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1])});if(close)x.closePath()};
-  G.otk.forEach(s=>{path(s);x.strokeStyle='rgba(255,236,170,.28)';x.lineWidth=1;x.stroke()});
+  G.otk.forEach(s=>{path(s);x.strokeStyle='rgba(255,236,170,.28)';x.lineWidth=lite?.6:1;x.stroke()});
   const col={B:[76,175,80],C:[62,124,177],Bu:[228,87,46]};
   G.blocks.filter(b=>!b.up).forEach(b=>{const c3=b.cat==='C'?col.C:col.B;path(b.p,true);x.fillStyle=`rgba(${c3},.32)`;x.fill();x.setLineDash([10,6]);x.strokeStyle=`rgba(${c3},.95)`;x.lineWidth=3;x.stroke();x.setLineDash([])});
   G.blocks.filter(b=>b.up).forEach(b=>{const c3=b.cat==='C'?col.C:col.Bu;path(b.p,true);x.fillStyle=`rgba(${c3},.38)`;x.fill();x.strokeStyle=`rgba(${c3},1)`;x.lineWidth=3.5;x.stroke()});
@@ -1066,8 +1068,8 @@ function overlay(){const cw=2048,ch=Math.round(cw*Hm/W),c=document.createElement
 
 function build(){
   decode();
-  renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(1.5,window.devicePixelRatio||1));renderer.setSize(1920,1080,false);
+  renderer=new THREE.WebGLRenderer({antialias:!lite,powerPreference:lite?'default':'high-performance'});
+  renderer.setPixelRatio(lite?1:Math.min(1.5,window.devicePixelRatio||1));renderer.setSize(lite?1280:1920,lite?720:1080,false);
   renderer.domElement.style.cssText='width:1920px;height:1080px;display:block';box.appendChild(renderer.domElement);
   scene=new THREE.Scene();
   const fogC=new THREE.Color('#1c1914');scene.fog=new THREE.FogExp2(fogC,.00028);
@@ -1080,12 +1082,14 @@ function build(){
   scene.add(sky);
 
   /* terrain mesh, dropping cells outside the survey */
-  const pos=new Float32Array(nx*ny*3),uv=new Float32Array(nx*ny*2),hh=new Float32Array(nx*ny),pa=new Float32Array(nx*ny),ay=new Float32Array(nx*ny),ad=new Float32Array(nx*ny),aw=new Float32Array(nx*ny),as=new Float32Array(nx*ny);
+  const mx2=Math.floor((nx-1)/ST)+1,my2=Math.floor((ny-1)/ST)+1,NV=mx2*my2;
+  const pos=new Float32Array(NV*3),uv=new Float32Array(NV*2),hh=new Float32Array(NV),pa=new Float32Array(NV),ay=new Float32Array(NV),ad=new Float32Array(NV),aw=new Float32Array(NV),as=new Float32Array(NV),ok=new Uint8Array(NV);
   let mean=0,cnt=0;for(const v of zf)if(!isNaN(v)){mean+=v;cnt++}mean/=cnt;
-  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const k=j*nx+i,z=isNaN(zf[k])?mean:zf[k];pos[3*k]=i*R-W/2;pos[3*k+1]=(z-H0)*EX;pos[3*k+2]=-(j*R-Hm/2);uv[2*k]=i/(nx-1);uv[2*k+1]=j/(ny-1);hh[k]=z;pa[k]=pm[k];ay[k]=YR[k]/30;ad[k]=DF[k]/10;aw[k]=DY[k]/30;as[k]=SY[k]/20}
-  const idx=[];for(let j=0;j<ny-1;j++)for(let i=0;i<nx-1;i++){const a=j*nx+i,b=a+1,c=a+nx,d=c+1;if(isNaN(zf[a])||isNaN(zf[b])||isNaN(zf[c])||isNaN(zf[d]))continue;idx.push(a,b,c,b,d,c)}
+  for(let jj=0;jj<my2;jj++)for(let ii=0;ii<mx2;ii++){const i=ii*ST,j=jj*ST,k=j*nx+i,q=jj*mx2+ii,z=isNaN(zf[k])?mean:zf[k];ok[q]=isNaN(zf[k])?0:1;
+    pos[3*q]=i*R-W/2;pos[3*q+1]=(z-H0)*EX;pos[3*q+2]=-(j*R-Hm/2);uv[2*q]=i/(nx-1);uv[2*q+1]=j/(ny-1);hh[q]=z;pa[q]=pm[k];ay[q]=YR[k]/30;ad[q]=DF[k]/10;aw[q]=DY[k]/30;as[q]=SY[k]/20}
+  const idx=[];for(let j=0;j<my2-1;j++)for(let i=0;i<mx2-1;i++){const a=j*mx2+i,b=a+1,c=a+mx2,d=c+1;if(!ok[a]||!ok[b]||!ok[c]||!ok[d])continue;idx.push(a,b,c,b,d,c)}
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));geo.setAttribute('h',new THREE.BufferAttribute(hh,1));geo.setAttribute('pm',new THREE.BufferAttribute(pa,1));geo.setAttribute('ay',new THREE.BufferAttribute(ay,1));geo.setAttribute('ad',new THREE.BufferAttribute(ad,1));geo.setAttribute('aw',new THREE.BufferAttribute(aw,1));geo.setAttribute('as',new THREE.BufferAttribute(as,1));
-  geo.setIndex(new THREE.BufferAttribute(nx*ny>65535?new Uint32Array(idx):new Uint16Array(idx),1));geo.computeVertexNormals();
+  geo.setIndex(new THREE.BufferAttribute(NV>65535?new Uint32Array(idx):new Uint16Array(idx),1));geo.computeVertexNormals();
   mat=new THREE.ShaderMaterial({extensions:{derivatives:true},
     uniforms:{uOver:{value:overlay()},uSun:{value:new THREE.Vector3(-.55,.55,-.6).normalize()},uFog:{value:fogC},uDen:{value:.00028},uShow:{value:1},uYear:{value:9}},
     vertexShader:'uniform float uYear;attribute float h;attribute float pm;attribute float ay;attribute float ad;attribute float aw;attribute float as;varying float vP;varying float vH;varying vec3 vN;varying vec2 vUv;varying float vD;varying float vW;void main(){float dig=ay>0.?clamp(uYear-ay+1.,0.,1.):1.;float w=aw>0.?clamp(uYear-aw+1.,0.,1.):0.;vec3 p=position;p.y+=ad*2.2*(1.-dig)+as*w*2.2;vW=w*smoothstep(.2,1.5,as);vP=pm*dig;vH=h+ad*(1.-dig);vN=normal;vUv=uv;vec4 mv=modelViewMatrix*vec4(p,1.);vD=-mv.z;gl_Position=projectionMatrix*mv;}',
@@ -1184,7 +1188,8 @@ bind(box);bind(document.getElementById('yr3d'));
 again.addEventListener('click',e=>{e.stopPropagation();start()});
 
 const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-function frame(now){if(!running)return;requestAnimationFrame(frame);
+function frame(now){if(!running)return;requestAnimationFrame(frame);try{frame0(now)}catch(e){fail(e)}}
+function frame0(now){
   const t=Math.max(0,(now-t0)/1000);
   if(mode==='years'){const Y=Math.min(7.6,t/3.4+.4),yi=Math.max(1,Math.min(7,Math.ceil(Y)));mat.uniforms.uYear.value=Y;if(t>30)t0=now;
     if(!drag.on)orb.th+=.0005;const s2=Math.sin(orb.ph);cam.position.set(orb.tgt.x+orb.r*s2*Math.sin(orb.th),orb.tgt.y+orb.r*Math.cos(orb.ph),orb.tgt.z+orb.r*s2*Math.cos(orb.th));mat.uniforms.uShow.value=.35;cam.lookAt(orb.tgt);
@@ -1204,7 +1209,9 @@ function frame(now){if(!running)return;requestAnimationFrame(frame);
   const mx=cam.position.x+W/2,my=-cam.position.z+Hm/2,alt=cam.position.y/EX+H0,agl=alt-hAt(mx,my),dir=new THREE.Vector3();cam.getWorldDirection(dir);
   const hdg=(Math.atan2(dir.x,-dir.z)*180/Math.PI+360)%360,f=n=>Math.round(n).toLocaleString('en-US');
   tele.innerHTML=`<span>ӨНДӨР</span><b>${f(alt)} м</b><span>ГАЗРААС</span><b>${f(Math.max(0,agl))} м</b><span>ЧИГЛЭЛ</span><b>${String(Math.round(hdg)).padStart(3,'0')}°</b><span>X</span><b>${f(my+G.y0)}</b><span>Y</span><b>${f(mx+G.x0)}</b>`}
-function start(kind){if(!ready)build();plan();const host=kind==='years'?document.getElementById('yr3d'):box;if(renderer.domElement.parentNode!==host)host.appendChild(renderer.domElement);
+function fail(e){broken=true;running=false;['fly3d','yr3d'].forEach(id=>{const h=document.getElementById(id);if(h&&!h.querySelector('.f3err')){const m=document.createElement('p');m.className='f3err';m.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:40px;color:#F1ECE1;text-align:center;max-width:1200px';m.textContent='Энэ төхөөрөмж дээр 3D харагдац ажиллахгүй байна. Слайдыг шударч үргэлжлүүлнэ үү.';h.appendChild(m)}});console.warn(e)}
+function start(kind){if(broken)return;try{start0(kind)}catch(e){fail(e)}}
+function start0(kind){if(!ready)build();plan();const host=kind==='years'?document.getElementById('yr3d'):box;if(renderer.domElement.parentNode!==host)host.appendChild(renderer.domElement);
   if(kind==='years'){mode='years';lastY=0;mat.uniforms.uYear.value=0;const c=G.crest.reduce((a,p)=>[a[0]+p[0]/G.crest.length,a[1]+p[1]/G.crest.length],[0,0]);orb.tgt.copy(W3(c[0],c[1]-250,hAt(c[0],c[1])));orb.r=2000;orb.ph=.72;orb.th=.5;t0=performance.now();if(!running){running=true;requestAnimationFrame(frame)}return}
   mat.uniforms.uYear.value=9;mat.uniforms.uShow.value=1;mode='fly';again.hidden=true;t0=performance.now();if(!running){running=true;requestAnimationFrame(frame)}}
 function stop(){running=false}
@@ -1275,7 +1282,7 @@ function go(n,instant){
   const prev=slides[cur],fwd=n>cur;
   if(!instant&&prev!==slides[n]){prev.classList.remove('on');prev.classList.add('out');setTimeout(()=>prev.classList.remove('out'),900);
     if(!reduce){wipe.className='wipe';void wipe.offsetWidth;wipe.className='wipe run'+(fwd?'':' back')}}
-  if(window.FLY)(slides[n].id==='flySlide'?FLY.enter():slides[n].id==='yrSlide'?FLY.enter('years'):FLY.leave());cur=n;slides.forEach(s=>s.classList.remove('cur'));slides[n].classList.add('on','cur');count(slides[n]);hud()}
+  try{if(window.FLY)(slides[n].id==='flySlide'?FLY.enter():slides[n].id==='yrSlide'?FLY.enter('years'):FLY.leave())}catch(e){}cur=n;slides.forEach(s=>s.classList.remove('cur'));slides[n].classList.add('on','cur');count(slides[n]);hud()}
 document.getElementById('next').onclick=e=>{e.stopPropagation();go(cur+1)};
 document.getElementById('prev').onclick=e=>{e.stopPropagation();go(cur-1)};
 document.getElementById('fsBtn').onclick=e=>{e.stopPropagation();fs()};
@@ -1329,7 +1336,7 @@ stage.addEventListener('mousemove',e=>{if(ov||reduce)return;const r=stage.getBou
 
 /* start */
 const m=/^#s(\d+)$/.exec(location.hash);cur=m?Math.min(N,Math.max(1,+m[1]))-1:0;
-slides[cur].classList.add('on','cur');hud();if(window.FLY&&/flySlide|yrSlide/.test(slides[cur].id))FLY.enter(slides[cur].id==='yrSlide'?'years':undefined);
+slides[cur].classList.add('on','cur');hud();try{if(window.FLY&&/flySlide|yrSlide/.test(slides[cur].id))FLY.enter(slides[cur].id==='yrSlide'?'years':undefined)}catch(e){}
 if(cur===0&&!reduce){const lbs=stage.querySelectorAll('.lb');lbs.forEach(l=>l.style.transition='none');stage.classList.remove('opened');void stage.offsetWidth;lbs.forEach(l=>l.style.transition='');setTimeout(()=>stage.classList.add('opened'),300)}
 setTimeout(()=>{count(slides[cur])},cur===0?900:0);
 setTimeout(()=>{const h=document.getElementById('hint');if(h)h.style.opacity=0},7000);
